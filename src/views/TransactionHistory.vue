@@ -16,12 +16,8 @@ const totalPages = computed(() => {
 })
 
 const applyPagination = () => {
-  if (page.value > totalPages.value) {
-    page.value = totalPages.value
-  }
-  if (page.value < 1) {
-    page.value = 1
-  }
+  if (page.value > totalPages.value) page.value = totalPages.value
+  if (page.value < 1) page.value = 1
 
   const start = (page.value - 1) * perPage.value
   const end = start + perPage.value
@@ -33,7 +29,13 @@ const fetchTransactions = async () => {
   error.value = ""
   try {
     const res = await api.get("/sales/")
-    allTransactions.value = res.data
+
+    // ✅ MOST RECENT FIRST
+    allTransactions.value = res.data.sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    )
+
+    page.value = 1
     applyPagination()
   } catch (err) {
     error.value = err.response?.data?.error || "Failed to load transactions"
@@ -43,15 +45,11 @@ const fetchTransactions = async () => {
 }
 
 const nextPage = () => {
-  if (page.value < totalPages.value) {
-    page.value++
-  }
+  if (page.value < totalPages.value) page.value++
 }
 
 const prevPage = () => {
-  if (page.value > 1) {
-    page.value--
-  }
+  if (page.value > 1) page.value--
 }
 
 watch(page, applyPagination)
@@ -63,9 +61,7 @@ onMounted(fetchTransactions)
 <template>
   <div class="transactions">
     <div class="top-controls">
-      <button @click="prevPage" :disabled="page === 1">
-        ◀ Prev
-      </button>
+      <button @click="prevPage" :disabled="page === 1">◀ Prev</button>
 
       <span class="page-info">
         Page {{ page }} of {{ totalPages }}
