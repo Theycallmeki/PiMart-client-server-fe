@@ -7,18 +7,27 @@ const router = useRouter()
 const route = useRoute()
 
 const isOpen = ref(false)
+const analyticsOpen = ref(false)
 
+/* MAIN TABS (NO ANALYTICS HERE) */
 const tabs = [
   { label: "Home", path: "/", icon: "pi pi-home" },
   { label: "Inventory", path: "/inventory", icon: "pi pi-box" },
   { label: "POS", path: "/pos", icon: "pi pi-shopping-cart" },
   { label: "Payment", path: "/payment", icon: "pi pi-credit-card" },
-  { label: "Transactions", path: "/transactions", icon: "pi pi-receipt" },
-  { label: "Analytics", path: "/analytics", icon: "pi pi-chart-line" }
+  { label: "Transactions", path: "/transactions", icon: "pi pi-receipt" }
+]
+
+/* ANALYTICS DROPDOWN */
+const analyticsTabs = [
+  { label: "Demand Forecast", path: "/analytics/demand", icon: "pi pi-chart-line" },
+  { label: "Item Movement", path: "/analytics/movement", icon: "pi pi-sort-amount-up" },
+  { label: "Stockout Risk", path: "/analytics/stockout", icon: "pi pi-exclamation-triangle" }
 ]
 
 const navigate = (path) => {
   isOpen.value = false
+  analyticsOpen.value = false
   router.push(path)
 }
 
@@ -27,6 +36,7 @@ const handleLogout = async () => {
     await api.post("/users/logout")
   } finally {
     isOpen.value = false
+    analyticsOpen.value = false
     router.push("/login")
   }
 }
@@ -41,6 +51,7 @@ const handleLogout = async () => {
 
     <!-- DESKTOP TABS -->
     <div class="tabs desktop">
+      <!-- NORMAL TABS -->
       <button
         v-for="tab in tabs"
         :key="tab.path"
@@ -51,6 +62,27 @@ const handleLogout = async () => {
         <i :class="tab.icon" />
         <span>{{ tab.label }}</span>
       </button>
+
+      <!-- ANALYTICS DROPDOWN -->
+      <div
+        class="tab dropdown"
+        :class="{ active: route.path.startsWith('/analytics') }"
+      >
+        <i class="pi pi-chart-line" />
+        <span>Analytics</span>
+
+        <div class="dropdown-menu">
+          <button
+            v-for="a in analyticsTabs"
+            :key="a.path"
+            class="dropdown-item"
+            @click="navigate(a.path)"
+          >
+            <i :class="a.icon" />
+            <span>{{ a.label }}</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="spacer"></div>
@@ -69,6 +101,7 @@ const handleLogout = async () => {
 
     <!-- MOBILE MENU -->
     <div v-if="isOpen" class="mobile-menu">
+      <!-- NORMAL ITEMS -->
       <button
         v-for="tab in tabs"
         :key="tab.path"
@@ -79,6 +112,32 @@ const handleLogout = async () => {
         <i :class="tab.icon" />
         <span>{{ tab.label }}</span>
       </button>
+
+      <!-- MOBILE ANALYTICS -->
+      <button
+        class="mobile-item"
+        @click="analyticsOpen = !analyticsOpen"
+      >
+        <i class="pi pi-chart-line" />
+        <span>Analytics</span>
+        <i
+          class="pi pi-chevron-down"
+          :class="{ rotate: analyticsOpen }"
+        />
+      </button>
+
+      <div v-if="analyticsOpen" class="mobile-submenu">
+        <button
+          v-for="a in analyticsTabs"
+          :key="a.path"
+          class="mobile-subitem"
+          :class="{ active: route.path === a.path }"
+          @click="navigate(a.path)"
+        >
+          <i :class="a.icon" />
+          <span>{{ a.label }}</span>
+        </button>
+      </div>
 
       <button class="mobile-item logout-item" @click="handleLogout">
         <i class="pi pi-sign-out" />
@@ -131,12 +190,48 @@ const handleLogout = async () => {
   border-radius: 6px 6px 0 0;
   cursor: pointer;
   font-size: 0.8rem;
+  position: relative;
 }
 
 .tab.active {
   background-color: #242424;
   color: #ffffff;
   border-color: #2f2f2f;
+}
+
+/* DROPDOWN */
+.dropdown-menu {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  display: none;
+  flex-direction: column;
+  min-width: 200px;
+  z-index: 200;
+}
+
+.dropdown:hover .dropdown-menu {
+  display: flex;
+}
+
+.dropdown-item {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: #cfcfcf;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: #2a2a2a;
+  color: #ffffff;
 }
 
 /* SPACER */
@@ -185,7 +280,7 @@ const handleLogout = async () => {
   position: fixed;
   top: 40px;
   left: 8px;
-  width: 220px;
+  width: 240px;
   background-color: #1e1e1e;
   border: 1px solid #333;
   border-radius: 8px;
@@ -194,7 +289,8 @@ const handleLogout = async () => {
   z-index: 100;
 }
 
-.mobile-item {
+.mobile-item,
+.mobile-subitem {
   padding: 12px 14px;
   display: flex;
   align-items: center;
@@ -206,17 +302,29 @@ const handleLogout = async () => {
   cursor: pointer;
 }
 
-.mobile-item:hover {
+.mobile-item:hover,
+.mobile-subitem:hover {
   background-color: #2a2a2a;
 }
 
-.mobile-item.active {
+.mobile-item.active,
+.mobile-subitem.active {
   background-color: #242424;
   color: #ffffff;
 }
 
+.mobile-submenu {
+  padding-left: 12px;
+}
+
 .logout-item {
   color: #ff6b6b;
+}
+
+/* ICON ROTATION */
+.rotate {
+  margin-left: auto;
+  transform: rotate(180deg);
 }
 
 /* RESPONSIVE */

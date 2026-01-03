@@ -6,8 +6,11 @@ import Home from "../views/Home.vue"
 import Inventory from "../views/Inventory.vue"
 import POS from "../views/POS.vue"
 import Payment from "../views/Payment.vue"
-import Analytics from "../views/Analytics.vue"
 import TransactionHistory from "../views/TransactionHistory.vue"
+
+import DemandForecast from "../views/DemandForecast.vue"
+import ItemMovement from "../views/ItemMovement.vue"
+import StockoutRisk from "../views/StockoutRisk.vue"
 
 const routes = [
   { path: "/login", component: Login, meta: { public: true } },
@@ -16,8 +19,12 @@ const routes = [
   { path: "/inventory", component: Inventory },
   { path: "/pos", component: POS },
   { path: "/payment", component: Payment },
-  { path: "/analytics", component: Analytics },
-  { path: "/transactions", component: TransactionHistory }
+  { path: "/transactions", component: TransactionHistory },
+
+  // 🔹 ANALYTICS
+  { path: "/analytics/demand", component: DemandForecast },
+  { path: "/analytics/movement", component: ItemMovement },
+  { path: "/analytics/stockout", component: StockoutRisk }
 ]
 
 const router = createRouter({
@@ -32,7 +39,6 @@ let authChecked = false
 router.beforeEach(async (to, from, next) => {
   if (to.meta.public) return next()
 
-  // ✅ already checked → instant
   if (authChecked && isAuthenticated) {
     return next()
   }
