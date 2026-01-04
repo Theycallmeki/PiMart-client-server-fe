@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue"
 import api from "../services/api"
 
 const items = ref([])
@@ -12,6 +12,21 @@ const run = async () => {
   await api.post("/ml/item-movement-forecast")
   load()
 }
+
+// Fast → Medium → Slow order
+const movementOrder = {
+  Fast: 1,
+  Medium: 2,
+  Slow: 3
+}
+
+const sortedItems = computed(() => {
+  return [...items.value].sort(
+    (a, b) =>
+      (movementOrder[a.movement_class] || 99) -
+      (movementOrder[b.movement_class] || 99)
+  )
+})
 
 onMounted(load)
 </script>
@@ -31,7 +46,7 @@ onMounted(load)
         </tr>
       </thead>
       <tbody>
-        <tr v-for="i in items" :key="i.item_id">
+        <tr v-for="i in sortedItems" :key="i.item_id">
           <td>{{ i.item_name }}</td>
           <td>{{ i.category }}</td>
           <td>{{ i.avg_daily_sales.toFixed(2) }}</td>
@@ -48,7 +63,8 @@ table {
   border-collapse: collapse;
   margin-top: 20px;
 }
-th, td {
+th,
+td {
   border: 1px solid #333;
   padding: 10px;
 }
