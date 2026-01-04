@@ -241,7 +241,7 @@ const handleLogout = async () => {
 
 /* LOGOUT */
 .logout {
-  height: 28px;
+  height: 35px;
   width: 32px;
   display: flex;
   align-items: center;
