@@ -1,12 +1,21 @@
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import api from "../services/api"
 
+// PrimeVue components
+import InputText from "primevue/inputtext"
+import Button from "primevue/button"
+import DataTable from "primevue/datatable"
+import Column from "primevue/column"
+import Message from "primevue/message"
+
 /* ---------------- STATE ---------------- */
-const barcode = ref("")
-const quantity = ref(1)
+const manualBarcode = ref("")
 const cart = ref([])
 const message = ref("")
+
+let scanBuffer = ""
+let scanTimeout = null
 
 /* ---------------- API ---------------- */
 const getItemByBarcode = (barcode) =>
@@ -15,34 +24,70 @@ const getItemByBarcode = (barcode) =>
 const createTransaction = (items) =>
   api.post("/sales", { items })
 
+/* ---------------- SCANNER (AUTO) ---------------- */
+const handleKeydown = async (e) => {
+  if (["Shift", "Alt", "Control"].includes(e.key)) return
+
+  if (e.key === "Enter") {
+    if (scanBuffer.length > 0) {
+      await addByBarcode(scanBuffer)
+      scanBuffer = ""
+    }
+    return
+  }
+
+  scanBuffer += e.key
+
+  clearTimeout(scanTimeout)
+  scanTimeout = setTimeout(() => {
+    scanBuffer = ""
+  }, 300)
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeydown)
+})
+
 /* ---------------- CART ---------------- */
-const addToCart = async () => {
+const addByBarcode = async (barcode) => {
   try {
-    const res = await getItemByBarcode(barcode.value)
+    const res = await getItemByBarcode(barcode)
     const item = res.data
 
     const existing = cart.value.find(c => c.item_id === item.id)
 
     if (existing) {
-      existing.quantity += quantity.value
+      existing.quantity++
     } else {
       cart.value.push({
         item_id: item.id,
         name: item.name,
         price: item.price,
-        quantity: quantity.value
+        quantity: 1
       })
     }
-
-    barcode.value = ""
-    quantity.value = 1
-  } catch (e) {
-    alert(e.response?.data?.error || "Item not found")
+  } catch {
+    message.value = "Item not found"
   }
 }
 
-const removeFromCart = (id) => {
-  cart.value = cart.value.filter(i => i.item_id !== id)
+const addManual = async () => {
+  if (!manualBarcode.value) return
+  await addByBarcode(manualBarcode.value)
+  manualBarcode.value = ""
+}
+
+const increaseQty = (row) => row.quantity++
+const decreaseQty = (row) => {
+  if (row.quantity > 1) row.quantity--
+}
+
+const removeItem = (row) => {
+  cart.value = cart.value.filter(i => i.item_id !== row.item_id)
 }
 
 /* ---------------- TOTAL ---------------- */
@@ -53,74 +98,86 @@ const total = computed(() =>
 /* ---------------- CHECKOUT ---------------- */
 const checkout = async () => {
   try {
-    const payload = {
-      items: cart.value.map(i => ({
-        item_id: i.item_id,
-        quantity: i.quantity
-      }))
-    }
+    const payload = cart.value.map(i => ({
+      item_id: i.item_id,
+      quantity: i.quantity
+    }))
 
-    console.log("PAYLOAD:", payload)
-
-    const res = await createTransaction(payload.items)
-
-    console.log("SUCCESS:", res.data)
+    await createTransaction(payload)
 
     cart.value = []
     message.value = "Transaction completed"
-  } catch (e) {
-    console.error("CHECKOUT ERROR:", e.response?.data)
-    message.value = e.response?.data?.error || "Checkout failed"
+  } catch {
+    message.value = "Checkout failed"
   }
 }
 </script>
 
 <template>
   <div class="pos">
-    <h1>🧾 Cashier POS</h1>
+    <h1>POS System</h1>
 
-    <div class="scan">
-      <input
-        v-model="barcode"
-        placeholder="Scan barcode"
-        @keyup.enter="addToCart"
+    <div class="scan-row">
+      <InputText
+        v-model="manualBarcode"
+        placeholder="Type barcode (optional)"
+        @keyup.enter="addManual"
       />
-      <input
-        v-model.number="quantity"
-        type="number"
-        min="1"
-      />
-      <button @click="addToCart">Add</button>
+      <Button label="Add" icon="pi pi-plus" @click="addManual" />
     </div>
 
-    <table v-if="cart.length">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Qty</th>
-          <th>Price</th>
-          <th>Total</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="c in cart" :key="c.item_id">
-          <td>{{ c.name }}</td>
-          <td>{{ c.quantity }}</td>
-          <td>{{ c.price }}</td>
-          <td>{{ (c.price * c.quantity).toFixed(2) }}</td>
-          <td>
-            <button @click="removeFromCart(c.item_id)">❌</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <small class="hint">
+      Scanner ready. You can scan anytime without focusing an input.
+    </small>
+
+    <DataTable
+      :value="cart"
+      v-if="cart.length"
+      responsiveLayout="scroll"
+    >
+      <Column field="name" header="Item" />
+      <Column header="Qty">
+        <template #body="{ data }">
+          <Button icon="pi pi-minus" text @click="decreaseQty(data)" />
+          <span class="qty">{{ data.quantity }}</span>
+          <Button icon="pi pi-plus" text @click="increaseQty(data)" />
+        </template>
+      </Column>
+      <Column header="Price">
+        <template #body="{ data }">
+          ₱{{ data.price }}
+        </template>
+      </Column>
+      <Column header="Total">
+        <template #body="{ data }">
+          ₱{{ (data.price * data.quantity).toFixed(2) }}
+        </template>
+      </Column>
+      <Column header="">
+        <template #body="{ data }">
+          <Button
+            icon="pi pi-trash"
+            severity="danger"
+            text
+            @click="removeItem(data)"
+          />
+        </template>
+      </Column>
+    </DataTable>
 
     <h2>Total: ₱{{ total.toFixed(2) }}</h2>
 
-    <button class="pay" @click="checkout">PAY</button>
+    <Button
+      label="PAY"
+      icon="pi pi-credit-card"
+      class="pay"
+      :disabled="!cart.length"
+      @click="checkout"
+    />
 
-    <p>{{ message }}</p>
+    <Message v-if="message" severity="info" class="mt-3">
+      {{ message }}
+    </Message>
   </div>
 </template>
 
@@ -129,35 +186,26 @@ const checkout = async () => {
   padding: 20px;
 }
 
-.scan {
+.scan-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
-.scan input {
-  height: 48px;
-  font-size: 1rem;
-  padding: 0 12px;
+.hint {
+  color: #666;
+  display: block;
+  margin-bottom: 12px;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 16px;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
+.qty {
+  margin: 0 8px;
+  font-weight: bold;
 }
 
 .pay {
-  height: 48px;
-  padding: 0 20px;
-  background: #3ddc97;
-  border: none;
+  margin-top: 16px;
+  height: 50px;
   font-size: 1.1rem;
-  cursor: pointer;
 }
 </style>
