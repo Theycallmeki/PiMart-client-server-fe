@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://thesis-flask.onrender.com", // Deployed Flask API
+  baseURL: "/api",               // 🔥 SAME-SITE via Vercel proxy
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
