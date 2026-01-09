@@ -1,11 +1,11 @@
-import axios from "axios"
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000", // Flask API
+  baseURL: "https://thesis-flask.onrender.com", // Deployed Flask API
   withCredentials: true,
   headers: {
-    "Content-Type": "application/json"
-  }
-})
+    "Content-Type": "application/json",
+  },
+});
 
-export default api
+export default api;
