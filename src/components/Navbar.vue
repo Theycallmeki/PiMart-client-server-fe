@@ -199,22 +199,50 @@ const handleLogout = async () => {
   border-color: #2f2f2f;
 }
 
-/* DROPDOWN */
+/* ========================= */
+/* DROPDOWN (FIXED) */
+/* ========================= */
+
+.dropdown {
+  position: relative;
+}
+
+/* hover bridge – prevents cursor gap */
+.dropdown::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+}
+
+/* menu */
 .dropdown-menu {
   position: absolute;
-  top: 30px;
+  top: 34px;
   left: 0;
   background-color: #1e1e1e;
   border: 1px solid #333;
   border-radius: 8px;
-  display: none;
+  display: flex;
   flex-direction: column;
   min-width: 200px;
   z-index: 200;
+
+  /* stable visibility */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
-.dropdown:hover .dropdown-menu {
-  display: flex;
+/* show when hovering tab OR menu */
+.dropdown:hover .dropdown-menu,
+.dropdown-menu:hover {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .dropdown-item {
