@@ -13,16 +13,23 @@ import Message from "primevue/message"
 const manualBarcode = ref("")
 const cart = ref([])
 const message = ref("")
+const userId = ref(null)   // ✅ added
 
 let scanBuffer = ""
 let scanTimeout = null
 
 /* ---------------- API ---------------- */
 const getItemByBarcode = (barcode) =>
-  api.get(`/items/barcode/${barcode}`)
+  api.get(`items/barcode/${barcode}`)
 
-const createTransaction = (items) =>
-  api.post("/sales", { items })
+const createTransaction = (payload) =>
+  api.post("sales", payload)
+
+/* ---------------- AUTH USER ---------------- */
+const fetchMe = async () => {
+  const res = await api.get("users/me")
+  userId.value = res.data.id
+}
 
 /* ---------------- SCANNER (AUTO) ---------------- */
 const handleKeydown = async (e) => {
@@ -45,6 +52,7 @@ const handleKeydown = async (e) => {
 }
 
 onMounted(() => {
+  fetchMe() // ✅ added
   window.addEventListener("keydown", handleKeydown)
 })
 
@@ -98,10 +106,13 @@ const total = computed(() =>
 /* ---------------- CHECKOUT ---------------- */
 const checkout = async () => {
   try {
-    const payload = cart.value.map(i => ({
-      item_id: i.item_id,
-      quantity: i.quantity
-    }))
+    const payload = {
+      user_id: userId.value,   // ✅ required by backend
+      items: cart.value.map(i => ({
+        item_id: i.item_id,
+        quantity: i.quantity
+      }))
+    }
 
     await createTransaction(payload)
 
