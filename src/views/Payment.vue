@@ -42,13 +42,18 @@ const cancelRequest = async (id) => {
       body: JSON.stringify({ reason }),
     });
 
-    const data = await res.json();
+    // ✅ SAFE JSON PARSING (THIS IS THE FIX)
+    let data = {};
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      data = await res.json();
+    }
 
     if (!res.ok) {
       throw new Error(data.error || "Failed to cancel request");
     }
 
-    alert(data.message);
+    alert(data.message || "Cash payment cancelled");
     fetchPending();
   } catch (err) {
     alert(err.message || "Cancel failed");
@@ -87,7 +92,7 @@ const cancelRequest = async (id) => {
       {{ p.code ? "Code Generated" : "Generate 6-Digit Code" }}
     </button>
 
-    <!-- CANCEL BUTTON (ALWAYS AVAILABLE FOR ADMIN) -->
+    <!-- CANCEL BUTTON -->
     <button
       @click="cancelRequest(p.id)"
       style="margin-left: 10px; color: red"
