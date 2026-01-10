@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from "vue";
 import { useCashPayment } from "../composables/useCashPayment";
+import { CashAPI } from "../services/cashApi";
 
 const { pending, fetchPending, generateCode } = useCashPayment();
 
@@ -33,30 +34,12 @@ const cancelRequest = async (id) => {
   );
 
   try {
-    const res = await fetch(`/payment/admin/cash/cancel/${id}`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ reason }),
-    });
-
-    // ✅ SAFE JSON PARSING (THIS IS THE FIX)
-    let data = {};
-    const contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      data = await res.json();
-    }
-
-    if (!res.ok) {
-      throw new Error(data.error || "Failed to cancel request");
-    }
-
-    alert(data.message || "Cash payment cancelled");
+    await CashAPI.cancel(id, reason);
+    alert("Cash payment cancelled");
     fetchPending();
   } catch (err) {
-    alert(err.message || "Cancel failed");
+    console.error(err);
+    alert(err?.response?.data?.error || "Cancel failed");
   }
 };
 </script>
