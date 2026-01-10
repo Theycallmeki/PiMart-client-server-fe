@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router"
-import api from "../services/api"
 
 import Login from "../views/Login.vue"
 import Home from "../views/Home.vue"
@@ -13,7 +12,7 @@ import ItemMovement from "../views/ItemMovement.vue"
 import StockoutRisk from "../views/StockoutRisk.vue"
 
 const routes = [
-  { path: "/login", component: Login, meta: { public: true } },
+  { path: "/login", component: Login },
 
   { path: "/", component: Home },
   { path: "/inventory", component: Inventory },
@@ -21,7 +20,7 @@ const routes = [
   { path: "/payment", component: Payment },
   { path: "/transactions", component: TransactionHistory },
 
-  // 🔹 ANALYTICS
+  // Analytics
   { path: "/analytics/demand", component: DemandForecast },
   { path: "/analytics/movement", component: ItemMovement },
   { path: "/analytics/stockout", component: StockoutRisk }
@@ -30,30 +29,6 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
-
-// 🔒 in-memory auth cache
-let isAuthenticated = false
-let authChecked = false
-
-router.beforeEach(async (to, from, next) => {
-  if (to.meta.public) return next()
-
-  if (authChecked && isAuthenticated) {
-    return next()
-  }
-
-  try {
-    // ✅ FIX: no leading slash
-    await api.get("users/me")
-    isAuthenticated = true
-    authChecked = true
-    next()
-  } catch {
-    isAuthenticated = false
-    authChecked = true
-    next("/login")
-  }
 })
 
 export default router
