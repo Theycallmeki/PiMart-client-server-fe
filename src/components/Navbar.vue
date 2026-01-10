@@ -164,16 +164,9 @@ const handleLogout = async () => {
 
 /* REMOVE HARD DIVIDER (folder effect) */
 .folder-nav::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-
-  /* subtle, almost invisible */
-  background-color: rgba(255, 255, 255, 0.04);
+  display: none;
 }
+
 
 /* DESKTOP TABS */
 .tabs {
