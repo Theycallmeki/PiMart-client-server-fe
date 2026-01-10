@@ -11,6 +11,15 @@ const error = ref("")
 const page = ref(1)
 const perPage = ref(10)
 
+const userId = ref(null) // ✅ added
+
+/* ---------------- AUTH USER ---------------- */
+const fetchMe = async () => {
+  const res = await api.get("users/me")
+  userId.value = res.data.id
+}
+
+/* ---------------- PAGINATION ---------------- */
 const totalPages = computed(() => {
   return Math.max(1, Math.ceil(allTransactions.value.length / perPage.value))
 })
@@ -24,11 +33,12 @@ const applyPagination = () => {
   transactions.value = allTransactions.value.slice(start, end)
 }
 
+/* ---------------- FETCH ---------------- */
 const fetchTransactions = async () => {
   loading.value = true
   error.value = ""
   try {
-    const res = await api.get("/sales/")
+    const res = await api.get("sales")
 
     // ✅ MOST RECENT FIRST
     allTransactions.value = res.data.sort(
@@ -55,7 +65,11 @@ const prevPage = () => {
 watch(page, applyPagination)
 watch(perPage, applyPagination)
 
-onMounted(fetchTransactions)
+/* ---------------- INIT ---------------- */
+onMounted(async () => {
+  await fetchMe()        // ✅ added
+  fetchTransactions()
+})
 </script>
 
 <template>
