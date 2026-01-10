@@ -44,7 +44,8 @@ router.beforeEach(async (to, from, next) => {
   }
 
   try {
-    await api.get("/users/me")
+    // ✅ FIX: no leading slash
+    await api.get("users/me")
     isAuthenticated = true
     authChecked = true
     next()
