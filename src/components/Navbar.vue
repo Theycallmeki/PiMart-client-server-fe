@@ -148,18 +148,21 @@ const handleLogout = async () => {
 </template>
 
 <style scoped>
-/* NAVBAR */
+/* NAVBAR — BLENDS WITH PAGE */
 .folder-nav {
   display: flex;
   align-items: flex-end;
   padding: 0 8px;
   height: 40px;
-  background-color: #1e1e1e;
+
+  /* KEY CHANGE: no bar background */
+  background-color: transparent;
+
   position: relative;
   z-index: 101;
 }
 
-/* COVER STRIP */
+/* REMOVE HARD DIVIDER (folder effect) */
 .folder-nav::after {
   content: "";
   position: absolute;
@@ -167,7 +170,9 @@ const handleLogout = async () => {
   right: 0;
   bottom: 0;
   height: 1px;
-  background-color: #242424;
+
+  /* subtle, almost invisible */
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 /* DESKTOP TABS */
@@ -183,31 +188,44 @@ const handleLogout = async () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background-color: #2a2a2a;
-  color: #cfcfcf;
-  border: 1px solid #333;
+
+  /* recessed tab */
+  background-color: #252525;
+  color: #bdbdbd;
+
+  border: 1px solid #2f2f2f;
   border-bottom: none;
-  border-radius: 6px 6px 0 0;
+  border-radius: 8px 8px 0 0;
+
   cursor: pointer;
   font-size: 0.8rem;
   position: relative;
+
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .tab.active {
-  background-color: #242424;
+  /* SAME AS PAGE BG — connects to content */
+  background-color: #1e1e1e;
   color: #ffffff;
-  border-color: #2f2f2f;
+  border-color: #3a3a3a;
+
+  transform: translateY(1px);
+  z-index: 2;
+
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    0 -1px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* ========================= */
-/* DROPDOWN (FIXED) */
+/* DROPDOWN */
 /* ========================= */
 
 .dropdown {
   position: relative;
 }
 
-/* hover bridge – prevents cursor gap */
 .dropdown::after {
   content: "";
   position: absolute;
@@ -217,27 +235,26 @@ const handleLogout = async () => {
   height: 8px;
 }
 
-/* menu */
 .dropdown-menu {
   position: absolute;
   top: 34px;
   left: 0;
+
   background-color: #1e1e1e;
   border: 1px solid #333;
   border-radius: 8px;
+
   display: flex;
   flex-direction: column;
   min-width: 200px;
   z-index: 200;
 
-  /* stable visibility */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.15s ease;
 }
 
-/* show when hovering tab OR menu */
 .dropdown:hover .dropdown-menu,
 .dropdown-menu:hover {
   opacity: 1;
