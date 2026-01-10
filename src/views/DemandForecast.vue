@@ -30,28 +30,32 @@ let chart = null
    LOAD FORECAST
 ========================= */
 const loadForecast = async () => {
-  forecast.value = (await api.get("/ml/forecast")).data
-  categories.value = forecast.value.tomorrow.map(f => f.category)
-  await nextTick()
-  renderChart()
+  try {
+    const res = await api.get("/ml/forecast")
+    forecast.value = res.data
+    categories.value = forecast.value.tomorrow.map(f => f.category)
+    await nextTick()
+    renderChart()
+  } catch (err) {
+    console.error("Load forecast failed:", err)
+  }
 }
 
 /* =========================
-   RUN ALL AI MODELS
+   RUN AI MODEL (SAFE)
 ========================= */
 const runAllModels = async () => {
   try {
     loading.value = true
 
-    await Promise.all([
-      api.post("/ml/forecast"),
-      api.post("/ml/item-movement-forecast"),
-      api.post("/ml/stockout-risk")
-    ])
+    // ✅ ONLY ONE API CALL (Render-safe)
+    await api.post("/ml/forecast")
 
     lastRun.value = new Date().toLocaleString()
     await loadForecast()
     computeDemand()
+  } catch (err) {
+    console.error("AI run failed:", err)
   } finally {
     loading.value = false
   }
@@ -198,7 +202,7 @@ onMounted(loadForecast)
       </select>
 
       <button @click="runAllModels" :disabled="loading">
-        {{ loading ? "Running AI..." : "Run All AI Models" }}
+        {{ loading ? "Running AI..." : "Run AI Forecast" }}
       </button>
 
       <span v-if="lastRun" class="timestamp">
@@ -294,7 +298,6 @@ onMounted(loadForecast)
   gap: 24px;
 }
 
-/* CARDS */
 .card {
   background: #1f1f1f;
   border: 1px solid #333;
@@ -304,14 +307,13 @@ onMounted(loadForecast)
 }
 
 .chart-card {
-  height: 360px; /* 🔑 keeps chart small */
+  height: 360px;
 }
 
 .chart-wrapper {
   height: 260px;
 }
 
-/* BADGES */
 .badge {
   margin-left: 10px;
   padding: 4px 8px;
@@ -322,7 +324,6 @@ onMounted(loadForecast)
 .badge.medium { background: #f39c12; }
 .badge.low { background: #27ae60; }
 
-/* STATS */
 .stats {
   display: flex;
   justify-content: space-between;
@@ -331,7 +332,6 @@ onMounted(loadForecast)
 .stat span { font-size: 0.85rem; color: #aaa; }
 .stat strong { font-size: 1.8rem; }
 
-/* TABLE */
 .top-table {
   width: 100%;
   border-collapse: collapse;
@@ -344,7 +344,6 @@ onMounted(loadForecast)
 .top-table th { font-size: 0.85rem; color: #aaa; }
 .emphasis { font-weight: bold; }
 
-/* CHART HEADER */
 .chart-header {
   display: flex;
   justify-content: space-between;
