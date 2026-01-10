@@ -6,6 +6,9 @@ const { pending, fetchPending, generateCode } = useCashPayment();
 
 onMounted(fetchPending);
 
+/* -----------------------
+   GENERATE CASH CODE
+----------------------- */
 const handleGenerate = async (id) => {
   try {
     const data = await generateCode(id);
@@ -16,15 +19,40 @@ const handleGenerate = async (id) => {
   }
 };
 
+/* -----------------------
+   CANCEL CASH REQUEST (ADMIN)
+----------------------- */
 const cancelRequest = async (id) => {
-  const res = await fetch(`/payment/admin/cash/cancel/${id}`, {
-    method: "POST",
-    credentials: "include"
-  });
+  const confirmed = confirm(
+    "Are you sure you want to cancel this cash payment?"
+  );
+  if (!confirmed) return;
 
-  const data = await res.json();
-  alert(data.message || data.error);
-  fetchPending();
+  const reason = prompt(
+    "Reason for cancelling this cash request? (optional)"
+  );
+
+  try {
+    const res = await fetch(`/payment/admin/cash/cancel/${id}`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ reason }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to cancel request");
+    }
+
+    alert(data.message);
+    fetchPending();
+  } catch (err) {
+    alert(err.message || "Cancel failed");
+  }
 };
 </script>
 
@@ -36,14 +64,14 @@ const cancelRequest = async (id) => {
     :key="p.id"
     style="border: 1px solid #ddd; padding: 12px; margin-bottom: 10px"
   >
-    <!-- ✅ USER INFO -->
+    <!-- USER INFO -->
     <p>
       <strong>User:</strong>
       {{ p.username }}
       <span style="color: #888;">(ID: {{ p.user_id }})</span>
     </p>
 
-    <!-- ✅ CASH CODE -->
+    <!-- CASH CODE -->
     <p v-if="p.code">
       <strong>Cash Code:</strong>
       <span style="font-weight: bold; color: #2c7be5;">
@@ -51,7 +79,7 @@ const cancelRequest = async (id) => {
       </span>
     </p>
 
-    <!-- ✅ GENERATE BUTTON -->
+    <!-- GENERATE CODE BUTTON -->
     <button
       @click="handleGenerate(p.id)"
       :disabled="!!p.code"
@@ -59,11 +87,10 @@ const cancelRequest = async (id) => {
       {{ p.code ? "Code Generated" : "Generate 6-Digit Code" }}
     </button>
 
-    <!-- ✅ CANCEL BUTTON -->
+    <!-- CANCEL BUTTON (ALWAYS AVAILABLE FOR ADMIN) -->
     <button
       @click="cancelRequest(p.id)"
-      :disabled="!!p.code"
-      style="margin-left: 10px"
+      style="margin-left: 10px; color: red"
     >
       Cancel
     </button>
