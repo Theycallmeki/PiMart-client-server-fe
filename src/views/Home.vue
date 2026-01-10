@@ -106,11 +106,14 @@ const go = (path) => router.push(path)
 /* PAGE */
 .home {
   padding: 24px;
-  background: radial-gradient(circle at top, #1a1a1a, #0f0f0f);
   min-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
+
+  /* INHERIT GLOBAL BACKGROUND */
+  background: transparent;
 }
+
 
 /* HEADER */
 .title {
