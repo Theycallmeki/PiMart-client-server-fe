@@ -22,7 +22,8 @@ const tabs = [
 const analyticsTabs = [
   { label: "Demand Forecast", path: "/analytics/demand", icon: "pi pi-chart-line" },
   { label: "Item Movement", path: "/analytics/movement", icon: "pi pi-sort-amount-up" },
-  { label: "Stockout Risk", path: "/analytics/stockout", icon: "pi pi-exclamation-triangle" }
+  { label: "Stockout Risk", path: "/analytics/stockout", icon: "pi pi-exclamation-triangle" },
+  { label: "Recommendations", path: "/analytics/recommendations", icon: "pi pi-star" }
 ]
 
 const navigate = (path) => {

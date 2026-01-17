@@ -11,6 +11,7 @@ import TransactionHistory from "../views/TransactionHistory.vue"
 import DemandForecast from "../views/DemandForecast.vue"
 import ItemMovement from "../views/ItemMovement.vue"
 import StockoutRisk from "../views/StockoutRisk.vue"
+import Recommendations from "../views/Recommendations.vue"
 
 const routes = [
   { path: "/login", component: Login, meta: { public: true } },
@@ -24,7 +25,8 @@ const routes = [
   // 🔹 ANALYTICS
   { path: "/analytics/demand", component: DemandForecast },
   { path: "/analytics/movement", component: ItemMovement },
-  { path: "/analytics/stockout", component: StockoutRisk }
+  { path: "/analytics/stockout", component: StockoutRisk },
+  { path: "/analytics/recommendations", component: Recommendations }
 ]
 
 const router = createRouter({
